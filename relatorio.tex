@@ -1,0 +1,424 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[brazilian]{babel}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{fancyhdr}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{enumitem}
+\usepackage{tikz}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+% Configuração de página
+\geometry{left=2.5cm, right=2.5cm, top=2.5cm, bottom=2.5cm}
+
+% Configuração de cores
+\definecolor{codeblue}{RGB}{0,102,204}
+\definecolor{codegray}{RGB}{128,128,128}
+\definecolor{codegreen}{RGB}{0,128,0}
+\definecolor{backcolour}{RGB}{245,245,245}
+
+% Configuração de código VHDL
+\lstdefinestyle{vhdlstyle}{
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{codeblue}\bfseries,
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codegreen},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2,
+    frame=single,
+    language=VHDL
+}
+\lstset{style=vhdlstyle}
+
+% Configuração de hyperlinks
+\hypersetup{
+    colorlinks=true,
+    linkcolor=codeblue,
+    urlcolor=codeblue,
+    citecolor=codeblue
+}
+
+% Cabeçalho e rodapé
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{CPU RISC-V 32-bit Pipeline}
+\lhead{Arquitetura de Computadores}
+\rfoot{Página \thepage}
+
+\begin{document}
+
+%=============================================================================
+% CAPA
+%=============================================================================
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    
+    {\LARGE \textbf{Universidade Federal do Espírito Santo}}\\[0.5cm]
+    {\Large Centro Tecnológico}\\[0.3cm]
+    {\Large Departamento de Informática}\\[2cm]
+    
+    \rule{\linewidth}{0.5mm}\\[0.4cm]
+    {\Huge \textbf{CPU RISC-V 32-bit Pipeline}}\\[0.2cm]
+    {\Large RV32I - Relatório Técnico}\\
+    \rule{\linewidth}{0.5mm}\\[2cm]
+    
+    {\large Disciplina: Arquitetura de Computadores}\\[0.5cm]
+    {\large Professor: [Nome do Professor]}\\[2cm]
+    
+    \textbf{Autores:}\\[0.3cm]
+    % Adicione os nomes dos integrantes do trio aqui
+    [Nome do Integrante 1]\\
+    [Nome do Integrante 2]\\
+    [Nome do Integrante 3]\\[2cm]
+    
+    \textbf{Repositório GitHub:}\\[0.2cm]
+    \url{https://github.com/[seu-usuario]/[repositorio]}\\[2cm]
+    
+    \vfill
+    {\large Vitória - ES}\\
+    {\large Janeiro de 2026}
+\end{titlepage}
+
+%=============================================================================
+% SUMÁRIO
+%=============================================================================
+\tableofcontents
+\newpage
+
+%=============================================================================
+% 1. INTRODUÇÃO
+%=============================================================================
+\section{Introdução}
+
+Este relatório descreve a implementação de uma CPU RISC-V de 32 bits (RV32I) com arquitetura de pipeline de 5 estágios, desenvolvida em VHDL para uso no simulador Digital.
+
+\subsection{Objetivos}
+
+O objetivo deste projeto é projetar e implementar uma CPU RISC-V de 32 bits cuja microarquitetura seja baseada em um pipeline com 5 estágios, atendendo aos seguintes requisitos:
+
+\begin{itemize}
+    \item Pipeline com ao menos 5 estágios
+    \item Memórias de instruções e dados distintas
+    \item Cada memória entrega uma palavra por ciclo
+    \item Memórias com carga de dados assíncrona
+    \item CPU não opera durante carga de dados
+    \item Sinal de reset funcional
+    \item Implementação apenas do pipeline de inteiros (sem modo S)
+    \item Sinais de debug para aferição de estados internos
+\end{itemize}
+
+\subsection{Instruções Suportadas}
+
+A CPU implementa as 20 instruções RV32I especificadas:
+
+\begin{itemize}
+    \item \textbf{Aritméticas:} \texttt{add}, \texttt{addi}, \texttt{auipc}, \texttt{sub}
+    \item \textbf{Lógicas:} \texttt{and}, \texttt{andi}, \texttt{or}, \texttt{ori}, \texttt{xor}, \texttt{xori}
+    \item \textbf{Deslocamento:} \texttt{sll}, \texttt{slli}, \texttt{srl}, \texttt{srli}
+    \item \textbf{Memória:} \texttt{lw}, \texttt{lui}, \texttt{sw}
+    \item \textbf{Controle:} \texttt{jal}, \texttt{jalr}, \texttt{beq}, \texttt{bne}
+\end{itemize}
+
+%=============================================================================
+% 2. ARQUITETURA DO PIPELINE
+%=============================================================================
+\section{Arquitetura do Pipeline}
+
+\subsection{Visão Geral dos Estágios}
+
+A CPU utiliza um pipeline clássico de 5 estágios:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|c|c|l|}
+\hline
+\textbf{Estágio} & \textbf{Sigla} & \textbf{Função} \\
+\hline
+Instruction Fetch & IF & Busca instrução da memória ROM \\
+Instruction Decode & ID & Decodifica instrução e lê registradores \\
+Execute & EX & Executa operação na ALU \\
+Memory Access & MEM & Acessa memória de dados \\
+Write Back & WB & Escreve resultado no banco de registradores \\
+\hline
+\end{tabular}
+\caption{Estágios do Pipeline}
+\end{table}
+
+\subsection{Registradores de Pipeline}
+
+Os registradores de pipeline armazenam as informações entre os estágios:
+
+\begin{itemize}
+    \item \textbf{IF/ID} -- Armazena PC, PC+4 e instrução buscada
+    \item \textbf{ID/EX} -- Armazena dados dos registradores, imediato e sinais de controle
+    \item \textbf{EX/MEM} -- Armazena resultado da ALU e sinais de controle de memória
+    \item \textbf{MEM/WB} -- Armazena dados para escrita no banco de registradores
+\end{itemize}
+
+\subsection{Diagrama do Pipeline}
+
+A Figura \ref{fig:pipeline} apresenta o diagrama simplificado do pipeline:
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=0.8, every node/.style={scale=0.8}]
+    % Estágios
+    \node[draw, minimum width=1.5cm, minimum height=1cm] (IF) at (0,0) {IF};
+    \node[draw, minimum width=1.5cm, minimum height=1cm] (ID) at (3,0) {ID};
+    \node[draw, minimum width=1.5cm, minimum height=1cm] (EX) at (6,0) {EX};
+    \node[draw, minimum width=1.5cm, minimum height=1cm] (MEM) at (9,0) {MEM};
+    \node[draw, minimum width=1.5cm, minimum height=1cm] (WB) at (12,0) {WB};
+    
+    % Registradores de pipeline
+    \node[draw, fill=gray!20, minimum width=0.8cm, minimum height=1.5cm] (IFID) at (1.5,0) {\rotatebox{90}{\tiny IF/ID}};
+    \node[draw, fill=gray!20, minimum width=0.8cm, minimum height=1.5cm] (IDEX) at (4.5,0) {\rotatebox{90}{\tiny ID/EX}};
+    \node[draw, fill=gray!20, minimum width=0.8cm, minimum height=1.5cm] (EXMEM) at (7.5,0) {\rotatebox{90}{\tiny EX/MEM}};
+    \node[draw, fill=gray!20, minimum width=0.8cm, minimum height=1.5cm] (MEMWB) at (10.5,0) {\rotatebox{90}{\tiny MEM/WB}};
+    
+    % Componentes
+    \node[draw, fill=blue!10, minimum width=1.2cm] (PC) at (0,-2) {\tiny PC};
+    \node[draw, fill=blue!10, minimum width=1.2cm] (IMEM) at (0,-3.5) {\tiny IMEM};
+    \node[draw, fill=green!10, minimum width=1.2cm] (DEC) at (3,-2) {\tiny Decoder};
+    \node[draw, fill=green!10, minimum width=1.2cm] (REG) at (3,-3.5) {\tiny RegFile};
+    \node[draw, fill=orange!10, minimum width=1.2cm] (ALU) at (6,-2.75) {\tiny ALU};
+    \node[draw, fill=red!10, minimum width=1.2cm] (DMEM) at (9,-2.75) {\tiny DMEM};
+    
+    % Unidades de controle
+    \node[draw, fill=yellow!20, minimum width=4cm, minimum height=0.6cm] (HAZARD) at (6,-5) {\tiny Hazard Unit + Forwarding Unit};
+    
+    % Conexões
+    \draw[->] (IF) -- (IFID);
+    \draw[->] (IFID) -- (ID);
+    \draw[->] (ID) -- (IDEX);
+    \draw[->] (IDEX) -- (EX);
+    \draw[->] (EX) -- (EXMEM);
+    \draw[->] (EXMEM) -- (MEM);
+    \draw[->] (MEM) -- (MEMWB);
+    \draw[->] (MEMWB) -- (WB);
+    
+    % Writeback path
+    \draw[->, dashed] (WB.south) -- (12,-4) -- (3,-4) -- (REG.south);
+\end{tikzpicture}
+\caption{Diagrama do Pipeline RISC-V}
+\label{fig:pipeline}
+\end{figure}
+
+%=============================================================================
+% 3. ATENDIMENTO AOS REQUISITOS
+%=============================================================================
+\section{Atendimento aos Requisitos}
+
+\subsection{Memórias Distintas}
+
+\textbf{Requisito:} Memórias de instruções e dados separadas, cada uma entregando uma palavra por ciclo.
+
+\textbf{Implementação:} Arquitetura Harvard com interfaces separadas:
+
+\begin{lstlisting}[caption={Interface de Memórias}]
+-- Memoria de Instrucoes (ROM)
+imem_addr_o  : out std_logic_vector(31 downto 0);
+imem_data_i  : in  std_logic_vector(31 downto 0);
+
+-- Memoria de Dados (RAM)
+dmem_addr_o  : out std_logic_vector(31 downto 0);
+dmem_wdata_o : out std_logic_vector(31 downto 0);
+dmem_rdata_i : in  std_logic_vector(31 downto 0);
+dmem_we_o    : out std_logic;
+\end{lstlisting}
+
+\subsection{Carga Assíncrona de Memória}
+
+\textbf{Requisito:} Memórias com carga assíncrona; CPU não opera durante carga.
+
+\textbf{Implementação:} O sinal \texttt{load\_enable\_i} controla o estado da CPU:
+
+\begin{itemize}
+    \item \texttt{load\_enable\_i = '1'}: CPU pausada, permite carga de memória
+    \item \texttt{load\_enable\_i = '0'}: CPU operando normalmente
+\end{itemize}
+
+\begin{lstlisting}[caption={Controle de Carga}]
+if load_enable_i = '0' then
+    -- CPU ativa, atualiza registradores
+else
+    -- CPU pausada, mantem estado
+end if;
+
+-- Escrita bloqueada durante carga
+dmem_we_o <= mem_mem_write and (not load_enable_i);
+\end{lstlisting}
+
+\subsection{Sinal de Reset}
+
+\textbf{Requisito:} CPU deve possuir sinal de reset.
+
+\textbf{Implementação:} Reset síncrono ativo em nível alto (\texttt{reset\_i = '1'}):
+
+\begin{itemize}
+    \item Zera o Program Counter (PC = 0x00000000)
+    \item Limpa todos os registradores de pipeline
+    \item Insere NOPs em todos os estágios
+\end{itemize}
+
+\subsection{Instruções Implementadas}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Tipo} & \textbf{Instruções} & \textbf{Implementação} \\
+\hline
+Aritméticas & add, addi, auipc, sub & ALU com operações ADD/SUB \\
+Lógicas & and, andi, or, ori, xor, xori & ALU com operações AND/OR/XOR \\
+Deslocamento & sll, slli, srl, srli & ALU com shift left/right \\
+Memória & lw, lui, sw & Load/Store word \\
+Controle & jal, jalr, beq, bne & Jumps e branches condicionais \\
+\hline
+\end{tabular}
+\caption{Instruções Implementadas}
+\end{table}
+
+%=============================================================================
+% 4. ESCOLHAS DE PROJETO
+%=============================================================================
+\section{Escolhas de Projeto}
+
+\subsection{Tratamento de Hazards}
+
+\subsubsection{Data Hazards (RAW)}
+
+\begin{itemize}
+    \item \textbf{Forwarding Unit:} Encaminha dados dos estágios MEM e WB para EX, evitando stalls desnecessários
+    \item \textbf{Stall para Load-Use:} Insere bolha quando há dependência imediata de LW
+\end{itemize}
+
+\subsubsection{Control Hazards}
+
+\begin{itemize}
+    \item Branches são resolvidos no estágio EX
+    \item Flush de instruções em IF e ID quando branch é tomado
+\end{itemize}
+
+\subsection{Geração de Imediatos}
+
+O Instruction Decoder gera imediatos sign-extended para todos os formatos:
+
+\begin{itemize}
+    \item \textbf{I-type:} 12 bits $\rightarrow$ 32 bits
+    \item \textbf{S-type:} 12 bits (separados) $\rightarrow$ 32 bits
+    \item \textbf{B-type:} 13 bits (bit 0 = 0) $\rightarrow$ 32 bits
+    \item \textbf{U-type:} 20 bits $\rightarrow$ 32 bits (bits inferiores = 0)
+    \item \textbf{J-type:} 21 bits (bit 0 = 0) $\rightarrow$ 32 bits
+\end{itemize}
+
+\subsection{Sinais de Debug}
+
+Para aferição de estados internos, conforme requisitado:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Sinal} & \textbf{Descrição} \\
+\hline
+\texttt{pc\_debug\_o} & Valor atual do PC \\
+\texttt{instr\_debug\_o} & Instrução no estágio ID \\
+\texttt{alu\_result\_debug\_o} & Resultado da ALU \\
+\texttt{reg\_debug\_o} & Valor de registrador selecionado \\
+\texttt{stage\_if/id/ex\_pc\_o} & PC em cada estágio \\
+\texttt{hazard\_stall\_o} & Indicador de stall \\
+\texttt{hazard\_flush\_o} & Indicador de flush \\
+\hline
+\end{tabular}
+\caption{Sinais de Debug}
+\end{table}
+
+Módulos individuais também exportam sinais internos:
+\begin{itemize}
+    \item \textbf{ALU:} \texttt{carry\_o}, \texttt{overflow\_o}
+    \item \textbf{Branch Comparator:} \texttt{eq\_o}, \texttt{ne\_o}
+    \item \textbf{Hazard Unit:} \texttt{hazard\_type\_o}
+\end{itemize}
+
+%=============================================================================
+% 5. ESTRUTURA DE ARQUIVOS
+%=============================================================================
+\section{Estrutura de Arquivos}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Arquivo} & \textbf{Descrição} \\
+\hline
+\texttt{riscv\_cpu.vhd} & Módulo top-level \\
+\texttt{program\_counter.vhd} & Contador de programa \\
+\texttt{instruction\_decoder.vhd} & Decodificador + gerador de imediatos \\
+\texttt{control\_unit.vhd} & Unidade de controle \\
+\texttt{register\_file.vhd} & Banco de 32 registradores \\
+\texttt{alu.vhd} & Unidade lógico-aritmética \\
+\texttt{pipeline\_regs.vhd} & Registradores IF/ID, ID/EX, EX/MEM, MEM/WB \\
+\texttt{hazard\_unit.vhd} & Detecção de hazards \\
+\texttt{forwarding\_unit.vhd} & Data forwarding \\
+\texttt{branch\_comparator.vhd} & Comparador para branches \\
+\texttt{Circuito.dig} & Circuito montado no simulador Digital \\
+\texttt{instruções.md} & Instruções de configuração \\
+\hline
+\end{tabular}
+\caption{Arquivos do Projeto}
+\end{table}
+
+%=============================================================================
+% 6. CONCLUSÃO
+%=============================================================================
+\section{Conclusão}
+
+A implementação atende a todos os requisitos especificados:
+
+\begin{itemize}
+    \item[$\checkmark$] Pipeline de 5 estágios (IF, ID, EX, MEM, WB)
+    \item[$\checkmark$] Memórias de instruções e dados separadas
+    \item[$\checkmark$] Uma palavra por ciclo em cada memória
+    \item[$\checkmark$] Carga assíncrona de memória
+    \item[$\checkmark$] CPU pausa durante carga (\texttt{load\_enable\_i})
+    \item[$\checkmark$] Sinal de reset funcional
+    \item[$\checkmark$] Todas as 20 instruções RV32I implementadas
+    \item[$\checkmark$] Apenas pipeline de inteiros (sem modo S)
+    \item[$\checkmark$] Sinais de debug para aferição de estados internos
+\end{itemize}
+
+O projeto está disponível no repositório GitHub para consulta e reprodução.
+
+%=============================================================================
+% REFERÊNCIAS
+%=============================================================================
+\section*{Referências}
+\addcontentsline{toc}{section}{Referências}
+
+\begin{enumerate}
+    \item RISC-V Foundation. \textit{The RISC-V Instruction Set Manual, Volume I: User-Level ISA}. Disponível em: \url{https://riscv.org/specifications/}
+    \item Neemann, H. \textit{Digital - A digital logic designer and circuit simulator}. Disponível em: \url{https://github.com/hneemann/Digital}
+    \item GHDL. \textit{GHDL - Open-source VHDL simulator}. Disponível em: \url{https://github.com/ghdl/ghdl}
+    \item Patterson, D. A.; Hennessy, J. L. \textit{Computer Organization and Design: The Hardware/Software Interface}. Morgan Kaufmann, 2020.
+\end{enumerate}
+
+\end{document}
