@@ -12,7 +12,7 @@
         </entry>
         <entry>
           <string>ghdlOptions</string>
-          <string>--std=08 --ieee=synopsys --workdir=&quot;c:\Users\breno\OneDrive\Documentos\RiscV&quot;</string>
+          <string>--std=08 --ieee=synopsys --workdir=&quot;C:\Users\breno\Documentos\Faculdade\ArqComp\TrabalhosDigital\RiscV&quot;</string>
         </entry>
         <entry>
           <string>Label</string>
@@ -41,12 +41,12 @@
       <elementName>ROM</elementName>
       <elementAttributes>
         <entry>
-          <string>Label</string>
-          <string>ROM</string>
-        </entry>
-        <entry>
           <string>AddrBits</string>
           <int>8</int>
+        </entry>
+        <entry>
+          <string>Label</string>
+          <string>ROM</string>
         </entry>
         <entry>
           <string>Bits</string>

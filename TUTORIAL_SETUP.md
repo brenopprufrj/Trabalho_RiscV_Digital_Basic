@@ -1,10 +1,12 @@
 # Instruções de Configuração - CPU RISC-V no Digital
 
-> **CIRCUITO PRÉ-MONTADO**: O arquivo `Circuito.dig` já contém o circuito completo montado com CPU, memórias e conexões. Para utilizá-lo:
-> 1. Execute `compile_vhdl.bat` (Windows) ou `compile_vhdl.sh` (Linux/macOS) para compilar os módulos VHDL (veja as **Seções 2 e 3** deste documento para mais informações)
-> 2. Configure o Digital conforme a **Seção 3** (GHDL Options com o caminho da pasta)
+> **CIRCUITO PRÉ-MONTADO**: O arquivo `Circuito.dig` já contém o circuito completo montado com CPU vetorial, memórias e conexões. Para utilizá-lo:
+> 1. Execute `compile_vhdl.bat` (Windows) ou `compile_vhdl.sh` (Linux/macOS) para compilar os módulos VHDL
+> 2. Configure o Digital conforme a **Seção 3** (caminho do GHDL no Edit → Settings)
 > 3. Abra `Circuito.dig` no Digital
-> 4. Clique duas vezes no componente `riscv_cpu` e altere o **Code file** para o caminho absoluto do `riscv_cpu.vhd` no seu computador
+> 4. Clique duas vezes no componente `riscv_cpu` e configure:
+>    - Aba **Basic**: Altere o **Code file** para o caminho absoluto do `riscv_cpu.vhd` no seu computador
+>    - Aba **Options**: Configure o **GHDL Options** com `--std=08 --ieee=synopsys --workdir="CAMINHO_DA_PASTA"`
 >
 > As instruções abaixo são para quem deseja reconstruir o circuito do zero.
 
@@ -41,24 +43,26 @@ chmod +x compile_vhdl.sh
 1. Abra o Digital → **Edit → Settings**
 2. Na aba **External**, configure:
    - **GHDL**: Caminho do executável (ou deixe vazio se GHDL estiver no PATH)
-   - **GHDL Options**: 
-     ```
-     --std=08 --ieee=synopsys --workdir="CAMINHO_DA_PASTA_DO_PROJETO"
-     ```
-
-Substitua `CAMINHO_DA_PASTA_DO_PROJETO` pelo caminho completo onde estão os arquivos VHDL.
 
 ---
 
 ## 4. Adicionar a CPU no Circuito
 
 1. **Components → Misc. → External File**
-2. Configure:
+2. Configure na aba **Basic**:
    - **Application type**: `GHDL`
    - **Label**: `riscv_cpu`
    - **Code file**: Selecione `riscv_cpu.vhd`
    - **Inputs**: `clk_i,reset_i,load_enable_i,imem_data_i:32,dmem_rdata_i:32,reg_sel_i:5`
    - **Outputs**: `imem_addr_o:32,dmem_addr_o:32,dmem_wdata_o:32,dmem_we_o,pc_debug_o:32,instr_debug_o:32,alu_result_debug_o:32,reg_debug_o:32,stage_if_pc_o:32,stage_id_pc_o:32,stage_ex_pc_o:32,hazard_stall_o,hazard_flush_o`
+
+
+3. Na aba **Options**, configure o campo **GHDL Options**:
+   ```
+   --std=08 --ieee=synopsys --workdir="CAMINHO_DA_PASTA_DO_PROJETO"
+   ```
+   
+   Substitua `CAMINHO_DA_PASTA_DO_PROJETO` pelo caminho completo onde estão os arquivos VHDL.
 
 ---
 
