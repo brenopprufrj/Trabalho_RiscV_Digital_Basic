@@ -91,7 +91,7 @@
     [Nome do Integrante 3]\\[2cm]
     
     \textbf{Repositório GitHub:}\\[0.2cm]
-    \url{https://github.com/[seu-usuario]/[repositorio]}\\[2cm]
+    \url{https://github.com/brenopprufrj/Trabalho_RiscV_Digital_Basic.git}\\[2cm]
     
     \vfill
     {\large Vitória - ES}\\
@@ -381,7 +381,7 @@ Módulos individuais também exportam sinais internos:
 \texttt{forwarding\_unit.vhd} & Data forwarding \\
 \texttt{branch\_comparator.vhd} & Comparador para branches \\
 \texttt{Circuito.dig} & Circuito montado no simulador Digital \\
-\texttt{instruções.md} & Instruções de configuração \\
+\texttt{TUTORIAL\_SETUP.md} & Tutorial de configuração \\
 \hline
 \end{tabular}
 \caption{Arquivos do Projeto}
@@ -420,5 +420,183 @@ O projeto está disponível no repositório GitHub para consulta e reprodução.
     \item GHDL. \textit{GHDL - Open-source VHDL simulator}. Disponível em: \url{https://github.com/ghdl/ghdl}
     \item Patterson, D. A.; Hennessy, J. L. \textit{Computer Organization and Design: The Hardware/Software Interface}. Morgan Kaufmann, 2020.
 \end{enumerate}
+
+%=============================================================================
+% APÊNDICE A: REFERÊNCIA DE INSTRUÇÕES
+%=============================================================================
+\newpage
+\appendix
+\section{Referência de Instruções}
+\label{apendice:instrucoes}
+
+Esta seção apresenta a documentação completa de opcodes e instruções suportadas pela CPU RISC-V RV32I implementada.
+
+\subsection{Tabela de Opcodes}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|c|c|c|l|}
+\hline
+\textbf{Opcode (Bin)} & \textbf{Opcode (Hex)} & \textbf{Tipo} & \textbf{Instruções} \\
+\hline
+0110011 & 0x33 & R & add, sub, and, or, xor, sll, srl \\
+0010011 & 0x13 & I & addi, andi, ori, xori, slli, srli \\
+0000011 & 0x03 & I & lw \\
+0100011 & 0x23 & S & sw \\
+1100011 & 0x63 & B & beq, bne \\
+1101111 & 0x6F & J & jal \\
+1100111 & 0x67 & I & jalr \\
+0110111 & 0x37 & U & lui \\
+0010111 & 0x17 & U & auipc \\
+\hline
+\end{tabular}
+\caption{Tabela de Opcodes RV32I}
+\label{tab:opcodes}
+\end{table}
+
+\subsection{Formatos de Instrução}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{|c|c|c|c|c|c|c|}
+\hline
+\textbf{Formato} & \textbf{[31:25]} & \textbf{[24:20]} & \textbf{[19:15]} & \textbf{[14:12]} & \textbf{[11:7]} & \textbf{[6:0]} \\
+\hline
+R & funct7 & rs2 & rs1 & funct3 & rd & opcode \\
+I & \multicolumn{2}{c|}{imm[11:0]} & rs1 & funct3 & rd & opcode \\
+S & imm[11:5] & rs2 & rs1 & funct3 & imm[4:0] & opcode \\
+B & imm[12,10:5] & rs2 & rs1 & funct3 & imm[4:1,11] & opcode \\
+U & \multicolumn{4}{c|}{imm[31:12]} & rd & opcode \\
+J & \multicolumn{4}{c|}{imm[20,10:1,11,19:12]} & rd & opcode \\
+\hline
+\end{tabular}
+\caption{Formatos de Instrução RISC-V}
+\label{tab:formatos}
+\end{table}
+
+\subsection{Instruções Aritméticas e Lógicas}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|c|c|c|c|l|}
+\hline
+\textbf{Instrução} & \textbf{Tipo} & \textbf{Opcode} & \textbf{funct3} & \textbf{funct7} & \textbf{Operação} \\
+\hline
+add & R & 0110011 & 000 & 0000000 & rd = rs1 + rs2 \\
+sub & R & 0110011 & 000 & 0100000 & rd = rs1 - rs2 \\
+addi & I & 0010011 & 000 & - & rd = rs1 + imm \\
+auipc & U & 0010111 & - & - & rd = PC + (imm $\ll$ 12) \\
+and & R & 0110011 & 111 & 0000000 & rd = rs1 \& rs2 \\
+or & R & 0110011 & 110 & 0000000 & rd = rs1 | rs2 \\
+xor & R & 0110011 & 100 & 0000000 & rd = rs1 $\oplus$ rs2 \\
+andi & I & 0010011 & 111 & - & rd = rs1 \& imm \\
+ori & I & 0010011 & 110 & - & rd = rs1 | imm \\
+xori & I & 0010011 & 100 & - & rd = rs1 $\oplus$ imm \\
+\hline
+\end{tabular}
+\caption{Instruções Aritméticas e Lógicas}
+\label{tab:arit_logic}
+\end{table}
+
+\subsection{Instruções de Deslocamento}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|c|c|c|c|l|}
+\hline
+\textbf{Instrução} & \textbf{Tipo} & \textbf{Opcode} & \textbf{funct3} & \textbf{funct7} & \textbf{Operação} \\
+\hline
+sll & R & 0110011 & 001 & 0000000 & rd = rs1 $\ll$ rs2[4:0] \\
+srl & R & 0110011 & 101 & 0000000 & rd = rs1 $\gg$ rs2[4:0] \\
+slli & I & 0010011 & 001 & 0000000 & rd = rs1 $\ll$ shamt \\
+srli & I & 0010011 & 101 & 0000000 & rd = rs1 $\gg$ shamt \\
+\hline
+\end{tabular}
+\caption{Instruções de Deslocamento}
+\label{tab:shift}
+\end{table}
+
+\subsection{Instruções de Memória}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|c|c|c|l|}
+\hline
+\textbf{Instrução} & \textbf{Tipo} & \textbf{Opcode} & \textbf{funct3} & \textbf{Operação} \\
+\hline
+lw & I & 0000011 & 010 & rd = MEM[rs1 + imm] \\
+sw & S & 0100011 & 010 & MEM[rs1 + imm] = rs2 \\
+lui & U & 0110111 & - & rd = imm $\ll$ 12 \\
+\hline
+\end{tabular}
+\caption{Instruções de Memória}
+\label{tab:mem}
+\end{table}
+
+\subsection{Instruções de Controle de Fluxo}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|c|c|c|l|}
+\hline
+\textbf{Instrução} & \textbf{Tipo} & \textbf{Opcode} & \textbf{funct3} & \textbf{Operação} \\
+\hline
+beq & B & 1100011 & 000 & if (rs1 == rs2) PC += imm \\
+bne & B & 1100011 & 001 & if (rs1 != rs2) PC += imm \\
+jal & J & 1101111 & - & rd = PC+4; PC += imm \\
+jalr & I & 1100111 & 000 & rd = PC+4; PC = (rs1 + imm) \& $\sim$1 \\
+\hline
+\end{tabular}
+\caption{Instruções de Controle de Fluxo}
+\label{tab:control}
+\end{table}
+
+\subsection{Códigos de Controle da ALU}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|c|l|l|}
+\hline
+\textbf{Nome} & \textbf{Código} & \textbf{Operação} & \textbf{Descrição} \\
+\hline
+ALU\_ADD & 0000 & A + B & Soma \\
+ALU\_SUB & 0001 & A - B & Subtração \\
+ALU\_AND & 0010 & A \& B & AND bit-a-bit \\
+ALU\_OR & 0011 & A | B & OR bit-a-bit \\
+ALU\_XOR & 0100 & A $\oplus$ B & XOR bit-a-bit \\
+ALU\_SLL & 0101 & A $\ll$ B[4:0] & Shift left logical \\
+ALU\_SRL & 0110 & A $\gg$ B[4:0] & Shift right logical \\
+ALU\_PASS\_B & 0111 & B & Passa operando B (LUI) \\
+\hline
+\end{tabular}
+\caption{Códigos de Controle da ALU}
+\label{tab:alu_ctrl}
+\end{table}
+
+\subsection{Exemplos de Codificação}
+
+\textbf{Exemplo 1: \texttt{addi x1, x0, 5}} -- Carrega o valor 5 no registrador x1.
+\begin{verbatim}
+imm[11:0] = 000000000101 (5)
+rs1       = 00000 (x0)
+funct3    = 000
+rd        = 00001 (x1)
+opcode    = 0010011
+
+Hex: 0x00500093
+\end{verbatim}
+
+\textbf{Exemplo 2: \texttt{add x3, x1, x2}} -- Soma x1 + x2 e armazena em x3.
+\begin{verbatim}
+funct7    = 0000000
+rs2       = 00010 (x2)
+rs1       = 00001 (x1)
+funct3    = 000
+rd        = 00011 (x3)
+opcode    = 0110011
+
+Hex: 0x002081B3
+\end{verbatim}
 
 \end{document}

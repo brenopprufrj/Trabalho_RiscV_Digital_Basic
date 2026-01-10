@@ -58,7 +58,8 @@ Implementação de uma CPU RISC-V de 32 bits com arquitetura de pipeline de 5 es
 | `branch_comparator.vhd` | Comparador para instruções de branch |
 | `program_counter.vhd` | Contador de programa |
 | `riscv_cpu.vhd` | Módulo top-level (integra todos os componentes) |
-| `instruções.md` | Instruções de configuração e uso no simulador Digital |
+| `TUTORIAL_SETUP.md` | Tutorial de configuração e uso no simulador Digital |
+| `REFERENCIA_INSTRUCOES.md` | Documentação completa de opcodes e instruções RV32I |
 
 ---
 
@@ -108,13 +109,15 @@ Implementação de uma CPU RISC-V de 32 bits com arquitetura de pipeline de 5 es
 
 ## Como Usar
 
-Consulte o arquivo [instruções.md](instruções.md) para instruções detalhadas sobre:
+Consulte o arquivo [TUTORIAL_SETUP.md](TUTORIAL_SETUP.md) para instruções detalhadas sobre:
 
 1. Configuração do ambiente (GHDL + Digital)
 2. Adição de componentes VHDL no Digital
 3. Criação do circuito de teste
 4. Carregamento de programas
 5. Uso dos sinais de debug
+
+Para detalhes sobre opcodes e instruções, veja [REFERENCIA_INSTRUCOES.md](REFERENCIA_INSTRUCOES.md).
 
 ---
 
